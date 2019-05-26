@@ -1,6 +1,6 @@
 {
   "name": "serverless-sqs-local",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Serverless sqs local plugin",
   "main": "dist/index.js",
   "types": "src/types.d.ts",
