@@ -42,7 +42,6 @@
     "webpack-cli": "^3.3.2"
   },
   "dependencies": {
-    "bluebird": "^3.5.5",
     "lodash": "^4.17.11",
     "sqs-localhost": "^1.0.4"
   }
