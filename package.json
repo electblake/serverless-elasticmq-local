@@ -2,16 +2,30 @@
   "name": "serverless-sqs-local",
   "version": "1.0.0",
   "description": "Serverless sqs local plugin",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "src/types.d.ts",
   "scripts": {
-    "test": "jest"
+    "test": "DEBUG=* jest",
+    "dev": "webpack --watch"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/electblake/serverless-sqs-local.git"
   },
   "keywords": [
-    "sqs"
+    "serverless framework plugin",
+    "serverless applications",
+    "serverless plugins",
+    "api gateway",
+    "lambda",
+    "sqs",
+    "sqs local",
+    "aws",
+    "aws lambda",
+    "aws sqs",
+    "amazon",
+    "amazon web services",
+    "serverless.com"
   ],
   "author": "Blake E <electblake@gmail.com>",
   "license": "MIT",
@@ -21,9 +35,15 @@
   "homepage": "https://github.com/electblake/serverless-sqs-local#readme",
   "devDependencies": {
     "@types/jest": "^24.0.13",
+    "@types/lodash": "^4.14.132",
     "jest": "^24.8.0",
     "ts-jest": "^24.0.2",
     "webpack": "^4.32.2",
     "webpack-cli": "^3.3.2"
+  },
+  "dependencies": {
+    "bluebird": "^3.5.5",
+    "lodash": "^4.17.11",
+    "sqs-localhost": "^1.0.4"
   }
 }
