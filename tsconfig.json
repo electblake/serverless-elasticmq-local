@@ -1,14 +1,18 @@
 {
   "compilerOptions": {
     "lib": ["es2017"],
+    // "module": "commonjs",
     "moduleResolution": "node",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "alwaysStrict": true,
     "sourceMap": true,
     "noImplicitAny": false,
-    "target": "es2017",
+    "target": "es5",
     "outDir": "lib"
+    // "typeRoots": ["src/types.d.ts", "node"]
   },
-  "exclude": ["node_modules", "__tests__", "__mocks__", "__seeds__"]
+  "files": ["src/plugin.ts"]
+  // "exclude": ["node_modules", "__tests__", "__mocks__", "__seeds__"],
+  // "include": ["*.ts"]
 }

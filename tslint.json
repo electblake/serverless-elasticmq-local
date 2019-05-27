@@ -1,0 +1,21 @@
+{
+  "defaultSeverity": "error",
+  "extends": ["tslint:recommended"],
+  "jsRules": {},
+  "rules": {
+    "trailing-comma": [true],
+    "object-literal-sort-keys": [false],
+    "no-var-requires": [false],
+    "ordered-imports": [false],
+    "variable-name": [false],
+    "interface-name": [false],
+    "semicolon": [false],
+    "object-literal-key-quotes": [false],
+    "arrow-parens": [false],
+    "quotemark": ["single"]
+  },
+  "rulesDirectory": [],
+  "linterOptions": {
+    "exclude": ["services/frontend/**", "**/node_modules/**", "node_modules/**", "lib/**"]
+  }
+}

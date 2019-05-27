@@ -1,10 +1,51 @@
-import { ServerlessInstance, ServerlessService, SQSPluginConfig } from './types'
-import * as path from 'path'
-import SQSLocal, { SQSLocalOptions } from 'sqs-localhost'
 import * as _ from 'lodash'
+import * as path from 'path'
 const debug = require('debug')('serverless-sqs-local')
+import { ServerlessService, SQSPluginConfig } from './types'
+import { SQSLocalOptions } from 'sqs-localhost'
+import SQSLocal from 'sqs-localhost'
 
-export class ServerlessSQSLocal {
+export default class ServerlessElasticmqLocal {
+  get port() {
+    const config = (this.service.custom && this.service.custom.sqs) || {}
+    const port = _.get(config, 'start.port', 8000)
+    return port
+  }
+
+  get host() {
+    const config = (this.service.custom && this.service.custom.sqs) || {}
+    const host = _.get(config, 'start.host', 'localhost')
+    return host
+  }
+
+  /**
+   * Get the stage
+   *
+   * @return {String} the current stage
+   */
+  get stage() {
+    return (this.config && this.config.stage) || (this.service.provider && this.service.provider.stage)
+  }
+
+  /**
+   * Gets the table definitions
+   */
+  get tables() {
+    let stacks = []
+
+    const defaultStack = this.getDefaultStack()
+    if (defaultStack) {
+      stacks.push(defaultStack)
+    }
+
+    if (this.hasAdditionalStacksPlugin()) {
+      stacks = stacks.concat(this.getAdditionalStacks())
+    }
+
+    return stacks
+      .map((stack) => this.getTableDefinitionsFromStack(stack))
+      .reduce((tables, tablesInStack) => tables.concat(tablesInStack), [])
+  }
   // @ts-ignore
   private serverless: ServerlessInstance
   private service: ServerlessService
@@ -24,7 +65,7 @@ export class ServerlessSQSLocal {
     this.serverless = serverless
     this.service = serverless.service
     this.serverlessLog = serverless.cli.log.bind(serverless.cli)
-    this.config = (this.service.custom && this.service.custom['sqs']) || {}
+    this.config = (this.service.custom && this.service.custom.sqs) || {}
     this.sqsLocal = new SQSLocal()
     this.options = _.merge(
       {
@@ -43,7 +84,8 @@ export class ServerlessSQSLocal {
               //   port: {
               //     shortcut: 'p',
               //     usage:
-              //       'The port number that SQS will use to communicate with your application. If you do not specify this option, the default port is 8000',
+              //       'The port number that SQS will use to communicate with your application.
+              // If you do not specify this option, the default port is 8000',
               //   },
               migrate: {
                 shortcut: 'm',
@@ -87,51 +129,18 @@ export class ServerlessSQSLocal {
     }
   }
 
-  get port() {
-    const config = (this.service.custom && this.service.custom.sqs) || {}
-    const port = _.get(config, 'start.port', 8000)
-    return port
-  }
-
-  get host() {
-    const config = (this.service.custom && this.service.custom.sqs) || {}
-    const host = _.get(config, 'start.host', 'localhost')
-    return host
-  }
-
-  /**
-   * Get the stage
-   *
-   * @return {String} the current stage
-   */
-  get stage() {
-    return (this.config && this.config.stage) || (this.service.provider && this.service.provider.stage)
-  }
-
-  /**
-   * To check if the handler needs to be executed based on stage
-   *
-   * @return {Boolean} if the handler can run for the provided stage
-   */
-  shouldExecute() {
-    if (this.config.stages && this.config.stages.includes(this.stage)) {
-      return true
-    }
-    return false
-  }
-
-  removeHandler() {
+  public removeHandler() {
     return this.sqsLocal.remove()
   }
 
-  async installHandler() {
+  public async installHandler() {
     if (this.config.verbose) {
       debug('installHandler', this.options)
     }
     return this.sqsLocal.install(this.options)
   }
 
-  startHandler() {
+  public startHandler() {
     if (this.shouldExecute()) {
       const config = (this.service.custom && this.service.custom.sqs) || {}
       const options = _.merge(
@@ -162,7 +171,7 @@ export class ServerlessSQSLocal {
     }
   }
 
-  endHandler() {
+  public endHandler() {
     // if (this.shouldExecute() && !this.options.noStart) {
     if (this.shouldExecute()) {
       this.serverlessLog('SQS - stopping local elasticmq')
@@ -172,19 +181,31 @@ export class ServerlessSQSLocal {
     }
   }
 
-  getDefaultStack() {
+  /**
+   * To check if the handler needs to be executed based on stage
+   *
+   * @return {Boolean} if the handler can run for the provided stage
+   */
+  private shouldExecute() {
+    if (this.config.stages && this.config.stages.includes(this.stage)) {
+      return true
+    }
+    return false
+  }
+
+  private getDefaultStack() {
     return _.get(this.service, 'resources')
   }
 
-  getAdditionalStacks() {
+  private getAdditionalStacks() {
     return _.values(_.get(this.service, 'custom.additionalStacks', {}))
   }
 
-  hasAdditionalStacksPlugin() {
+  private hasAdditionalStacksPlugin() {
     return _.get(this.service, 'plugins', []).includes('serverless-plugin-additional-stacks')
   }
 
-  getTableDefinitionsFromStack(stack) {
+  private getTableDefinitionsFromStack(stack) {
     const resources = _.get(stack, 'Resources', [])
     return Object.keys(resources)
       .map((key) => {
@@ -195,73 +216,52 @@ export class ServerlessSQSLocal {
       .filter((n) => n)
   }
 
-  /**
-   * Gets the table definitions
-   */
-  get tables() {
-    let stacks = []
+  // private createTable(dynamodb, migration) {
+  //   return new Promise((resolve, reject) => {
+  //     if (migration.StreamSpecification && migration.StreamSpecification.StreamViewType) {
+  //       migration.StreamSpecification.StreamEnabled = true
+  //     }
+  //     if (migration.TimeToLiveSpecification) {
+  //       delete migration.TimeToLiveSpecification
+  //     }
+  //     if (migration.SSESpecification) {
+  //       migration.SSESpecification.Enabled = migration.SSESpecification.SSEEnabled
+  //       delete migration.SSESpecification.SSEEnabled
+  //     }
+  //     if (migration.PointInTimeRecoverySpecification) {
+  //       delete migration.PointInTimeRecoverySpecification
+  //     }
+  //     if (migration.Tags) {
+  //       delete migration.Tags
+  //     }
+  //     if (migration.BillingMode === 'PAY_PER_REQUEST') {
+  //       delete migration.BillingMode
 
-    const defaultStack = this.getDefaultStack()
-    if (defaultStack) {
-      stacks.push(defaultStack)
-    }
-
-    if (this.hasAdditionalStacksPlugin()) {
-      stacks = stacks.concat(this.getAdditionalStacks())
-    }
-
-    return stacks
-      .map((stack) => this.getTableDefinitionsFromStack(stack))
-      .reduce((tables, tablesInStack) => tables.concat(tablesInStack), [])
-  }
-
-  createTable(dynamodb, migration) {
-    return new Promise((resolve, reject) => {
-      if (migration.StreamSpecification && migration.StreamSpecification.StreamViewType) {
-        migration.StreamSpecification.StreamEnabled = true
-      }
-      if (migration.TimeToLiveSpecification) {
-        delete migration.TimeToLiveSpecification
-      }
-      if (migration.SSESpecification) {
-        migration.SSESpecification.Enabled = migration.SSESpecification.SSEEnabled
-        delete migration.SSESpecification.SSEEnabled
-      }
-      if (migration.PointInTimeRecoverySpecification) {
-        delete migration.PointInTimeRecoverySpecification
-      }
-      if (migration.Tags) {
-        delete migration.Tags
-      }
-      if (migration.BillingMode === 'PAY_PER_REQUEST') {
-        delete migration.BillingMode
-
-        const defaultProvisioning = {
-          ReadCapacityUnits: 5,
-          WriteCapacityUnits: 5,
-        }
-        migration.ProvisionedThroughput = defaultProvisioning
-        if (migration.GlobalSecondaryIndexes) {
-          migration.GlobalSecondaryIndexes.forEach((gsi) => {
-            gsi.ProvisionedThroughput = defaultProvisioning
-          })
-        }
-      }
-      dynamodb.raw.createTable(migration, (err) => {
-        if (err) {
-          if (err.name === 'ResourceInUseException') {
-            this.serverlessLog(`DynamoDB - Warn - table ${migration.TableName} already exists`)
-            resolve()
-          } else {
-            this.serverlessLog('DynamoDB - Error - ', err)
-            reject(err)
-          }
-        } else {
-          this.serverlessLog('DynamoDB - created table ' + migration.TableName)
-          resolve(migration)
-        }
-      })
-    })
-  }
+  //       const defaultProvisioning = {
+  //         ReadCapacityUnits: 5,
+  //         WriteCapacityUnits: 5,
+  //       }
+  //       migration.ProvisionedThroughput = defaultProvisioning
+  //       if (migration.GlobalSecondaryIndexes) {
+  //         migration.GlobalSecondaryIndexes.forEach((gsi) => {
+  //           gsi.ProvisionedThroughput = defaultProvisioning
+  //         })
+  //       }
+  //     }
+  //     dynamodb.raw.createTable(migration, (err) => {
+  //       if (err) {
+  //         if (err.name === 'ResourceInUseException') {
+  //           this.serverlessLog(`DynamoDB - Warn - table ${migration.TableName} already exists`)
+  //           resolve()
+  //         } else {
+  //           this.serverlessLog('DynamoDB - Error - ', err)
+  //           reject(err)
+  //         }
+  //       } else {
+  //         this.serverlessLog('DynamoDB - created table ' + migration.TableName)
+  //         resolve(migration)
+  //       }
+  //     })
+  //   })
+  // }
 }
-export default ServerlessSQSLocal

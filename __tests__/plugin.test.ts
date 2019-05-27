@@ -1,8 +1,8 @@
-import ServerlessSQSLocal from '../src/index'
+import ServerlessElasticmqLocal from '../src/plugin'
 import * as path from 'path'
 // import fs from 'fs'
-
-describe('serverless-sqs-local plugin', () => {
+// console.log('imported', ServerlessElasticmqLocal)
+describe('serverless-elasticmq-local plugin (ts)', () => {
   const mockServerlessInstance = {
     config: {
       servicePath: path.resolve(__dirname, '../'),
@@ -13,7 +13,7 @@ describe('serverless-sqs-local plugin', () => {
     },
     custom: {},
   }
-  const Plugin = new ServerlessSQSLocal(mockServerlessInstance, {})
+  const Plugin = new ServerlessElasticmqLocal(mockServerlessInstance, {})
   it('can install', async () => {
     await Plugin.installHandler()
     return true
