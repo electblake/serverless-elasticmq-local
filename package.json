@@ -1,6 +1,6 @@
 {
   "name": "serverless-elasticmq-local",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Serverless sqs local plugin",
   "main": "index.js",
   "types": "src/plugin.ts",
